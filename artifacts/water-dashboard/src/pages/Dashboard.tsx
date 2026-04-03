@@ -23,15 +23,16 @@ interface SensorData {
 
 const DEMO_MODE = true;
 
-function getSimulatedData(): SensorData {
+// thresholds passed in so simulated data matches user config
+function getSimulatedData(lowThr = 20, highThr = 90): SensorData {
   const t = Date.now() / 5000;
   const level = Math.min(100, Math.max(0, Math.round(50 + 40 * Math.sin(t))));
   const pumpOn = level < 50;
   return {
     level,
     distance: Math.round(((100 - level) / 100) * 50),
-    dry: level < 10 ? 1 : 0,
-    overflow: level > 90 ? 1 : 0,
+    dry: level < lowThr ? 1 : 0,
+    overflow: level > highThr ? 1 : 0,
     flow: pumpOn ? Math.max(0, Math.round(18 + 8 * Math.cos(t))) : 0,
   };
 }
@@ -179,7 +180,7 @@ export default function Dashboard({ isDark, setIsDark, onLock }: DashboardProps)
 
     let raw: SensorData;
     if (DEMO_MODE) {
-      raw = getSimulatedData();
+      raw = getSimulatedData(settings.lowThreshold, settings.highThreshold);
       setConnectionOk(true);
     } else {
       try {
@@ -361,17 +362,60 @@ export default function Dashboard({ isDark, setIsDark, onLock }: DashboardProps)
           {/* Tank visual */}
           <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
             <h2 style={secTitle}>Water Tank</h2>
-            <div style={{ position: "relative", width: 110, height: 200, borderRadius: "8px 8px 16px 16px", border: `2px solid ${T.tankOutline}`, overflow: "hidden", background: T.tankInner }}>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: `${data.level}%`, background: waterBgColor, transition: "height 0.8s cubic-bezier(0.4,0,0.2,1),background 0.5s", borderTop: `2px solid ${levelColor}` }}>
-                <div style={{ position: "absolute", top: -6, left: 0, right: 0, height: 12, background: levelColor, opacity: 0.3, borderRadius: "50%", animation: "wave 2s infinite ease-in-out" }} />
+
+            {/* Tank + side ruler */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+              {/* Tank body */}
+              <div style={{ position: "relative", width: 100, height: 200, borderRadius: "8px 8px 16px 16px", border: `2px solid ${T.tankOutline}`, overflow: "hidden", background: T.tankInner }}>
+                {/* Water fill */}
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: `${data.level}%`, background: waterBgColor, transition: "height 0.8s cubic-bezier(0.4,0,0.2,1),background 0.5s", borderTop: `2px solid ${levelColor}` }}>
+                  <div style={{ position: "absolute", top: -6, left: 0, right: 0, height: 12, background: levelColor, opacity: 0.3, borderRadius: "50%", animation: "wave 2s infinite ease-in-out" }} />
+                </div>
+
+                {/* LOW threshold line (red) */}
+                <div style={{ position: "absolute", left: 0, right: 0, bottom: `${settings.lowThreshold}%`, height: 2, background: "rgba(239,68,68,0.85)", zIndex: 3, pointerEvents: "none" }}>
+                  <span style={{ position: "absolute", right: 3, top: -14, fontSize: 9, fontWeight: 700, color: "#ef4444", whiteSpace: "nowrap", background: isDark ? "rgba(3,7,18,0.7)" : "rgba(255,255,255,0.7)", borderRadius: 3, padding: "1px 3px" }}>LOW {settings.lowThreshold}%</span>
+                </div>
+
+                {/* HIGH threshold line (amber) */}
+                <div style={{ position: "absolute", left: 0, right: 0, bottom: `${settings.highThreshold}%`, height: 2, background: "rgba(245,158,11,0.85)", zIndex: 3, pointerEvents: "none" }}>
+                  <span style={{ position: "absolute", right: 3, top: 3, fontSize: 9, fontWeight: 700, color: "#f59e0b", whiteSpace: "nowrap", background: isDark ? "rgba(3,7,18,0.7)" : "rgba(255,255,255,0.7)", borderRadius: 3, padding: "1px 3px" }}>HIGH {settings.highThreshold}%</span>
+                </div>
+
+                {/* 25 / 50 / 75 minor ticks */}
+                {[25, 50, 75].map(pct => (
+                  <div key={pct} style={{ position: "absolute", left: 4, bottom: `${pct}%`, width: 10, height: 1, background: T.tickBg, zIndex: 2 }} />
+                ))}
+
+                {/* Centre label */}
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, fontWeight: 700, color: isDark ? "#fff" : "#0c4a6e", textShadow: isDark ? "0 1px 6px rgba(0,0,0,0.85)" : "0 1px 4px rgba(255,255,255,0.9)", zIndex: 4 }}>
+                  {data.level}%
+                </div>
               </div>
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: isDark ? "#fff" : "#0c4a6e", textShadow: isDark ? "0 1px 6px rgba(0,0,0,0.8)" : "0 1px 4px rgba(255,255,255,0.9)", zIndex: 1 }}>
-                {data.level}%
+
+              {/* Side ruler — % scale with threshold markers */}
+              <div style={{ position: "relative", width: 28, height: 200, display: "flex", flexDirection: "column", justifyContent: "space-between", paddingBottom: 0 }}>
+                {[100, 75, 50, 25, 0].map(pct => (
+                  <div key={pct} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <div style={{ width: 5, height: 1, background: T.tickBg }} />
+                    <span style={{ fontSize: 8, color: T.textSub, lineHeight: 1 }}>{pct}</span>
+                  </div>
+                ))}
+                {/* Current level pointer */}
+                <div style={{ position: "absolute", right: 0, bottom: `${data.level}%`, transform: "translateY(50%)", transition: "bottom 0.8s cubic-bezier(0.4,0,0.2,1)" }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: levelColor, display: "block", lineHeight: 1 }}>◀</span>
+                </div>
               </div>
-              {[25, 50, 75].map(pct => (
-                <div key={pct} style={{ position: "absolute", left: 4, bottom: `${pct}%`, width: 14, height: 1, background: T.tickBg, zIndex: 2 }} />
-              ))}
             </div>
+
+            {/* Zone badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: data.level < settings.lowThreshold ? "rgba(239,68,68,0.1)" : data.level > settings.highThreshold ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.08)", border: `1px solid ${levelColor}33`, borderRadius: 20, padding: "5px 14px" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: levelColor, display: "inline-block", boxShadow: `0 0 0 3px ${levelColor}33` }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: levelColor }}>
+                {data.level < settings.lowThreshold ? "LOW — Dry Run Risk" : data.level > settings.highThreshold ? "HIGH — Overflow Risk" : "NORMAL"}
+              </span>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%" }}>
               <div style={{ textAlign: "center", fontSize: 12, color: T.textMuted }}>Distance<br /><strong style={{ color: T.text, fontSize: 15 }}>{data.distance} cm</strong></div>
               <div style={{ textAlign: "center", fontSize: 12, color: T.textMuted }}>Flow Rate<br /><strong style={{ color: data.flow > 0 ? "#22c55e" : T.textSub, fontSize: 15 }}>{(data.flow / 10).toFixed(1)} L/m</strong></div>
@@ -381,20 +425,75 @@ export default function Dashboard({ isDark, setIsDark, onLock }: DashboardProps)
           {/* Level + status column */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={card}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.09em" }}>Water Level</span>
-                <span style={{ fontSize: 28, fontWeight: 700, color: levelColor }}>{data.level}%</span>
-              </div>
-              <div style={{ height: 18, background: T.progressTrack, borderRadius: 100, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${data.level}%`, background: `linear-gradient(90deg,${levelColor}99,${levelColor})`, borderRadius: 100, transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 6 }}>
-                  <span style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>{data.level > 12 ? `${data.level}%` : ""}</span>
+              {/* Header row */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.09em" }}>Water Level</span>
+                  <div style={{ marginTop: 2, fontSize: 11, color: T.textSub }}>
+                    Thresholds: <span style={{ color: "#ef4444", fontWeight: 600 }}>Low ≤{settings.lowThreshold}%</span>
+                    {" · "}
+                    <span style={{ color: "#f59e0b", fontWeight: 600 }}>High ≥{settings.highThreshold}%</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 32, fontWeight: 800, color: levelColor, lineHeight: 1 }}>{data.level}%</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: levelColor, marginTop: 2, letterSpacing: "0.08em" }}>
+                    {data.level < settings.lowThreshold ? "LOW" : data.level > settings.highThreshold ? "HIGH" : "NORMAL"}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontSize: 11, color: T.textSub }}>
-                <span>0%</span>
-                <span style={{ color: "#ef4444", fontSize: 10 }}>▲{settings.lowThreshold}%</span>
-                <span style={{ color: "#f59e0b", fontSize: 10 }}>▲{settings.highThreshold}%</span>
-                <span>100%</span>
+
+              {/* Progress bar with correctly-positioned threshold markers */}
+              <div style={{ position: "relative", marginBottom: 28 }}>
+                {/* Track */}
+                <div style={{ height: 20, background: T.progressTrack, borderRadius: 100, position: "relative", overflow: "visible" }}>
+                  {/* Danger zone fill (0 → lowThreshold) */}
+                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${settings.lowThreshold}%`, background: "rgba(239,68,68,0.10)", borderRadius: "100px 0 0 100px" }} />
+                  {/* Safe zone fill (lowThreshold → highThreshold) */}
+                  <div style={{ position: "absolute", top: 0, bottom: 0, left: `${settings.lowThreshold}%`, width: `${settings.highThreshold - settings.lowThreshold}%`, background: "rgba(34,197,94,0.07)" }} />
+                  {/* High-risk zone fill (highThreshold → 100) */}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: `${100 - settings.highThreshold}%`, background: "rgba(245,158,11,0.10)", borderRadius: "0 100px 100px 0" }} />
+
+                  {/* Actual fill */}
+                  <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: `${data.level}%`, background: `linear-gradient(90deg,${levelColor}88,${levelColor})`, borderRadius: 100, transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 6, overflow: "hidden" }}>
+                    <span style={{ fontSize: 9, color: "#fff", fontWeight: 700, whiteSpace: "nowrap" }}>{data.level > 10 ? `${data.level}%` : ""}</span>
+                  </div>
+
+                  {/* LOW threshold marker — positioned at exact % */}
+                  <div style={{ position: "absolute", top: -4, bottom: -4, left: `${settings.lowThreshold}%`, width: 2, background: "#ef4444", zIndex: 3, borderRadius: 1, transform: "translateX(-50%)" }} />
+                  {/* HIGH threshold marker — positioned at exact % */}
+                  <div style={{ position: "absolute", top: -4, bottom: -4, left: `${settings.highThreshold}%`, width: 2, background: "#f59e0b", zIndex: 3, borderRadius: 1, transform: "translateX(-50%)" }} />
+                </div>
+
+                {/* Labels below the bar, pinned to the marker positions */}
+                <div style={{ position: "relative", height: 22, marginTop: 4 }}>
+                  <span style={{ position: "absolute", left: "0%", transform: "translateX(0)", fontSize: 9, color: T.textSub }}>0%</span>
+                  {/* LOW label */}
+                  <span style={{ position: "absolute", left: `${settings.lowThreshold}%`, transform: "translateX(-50%)", fontSize: 9, fontWeight: 700, color: "#ef4444", whiteSpace: "nowrap", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <span>▲</span>
+                    <span>{settings.lowThreshold}%</span>
+                  </span>
+                  {/* HIGH label */}
+                  <span style={{ position: "absolute", left: `${settings.highThreshold}%`, transform: "translateX(-50%)", fontSize: 9, fontWeight: 700, color: "#f59e0b", whiteSpace: "nowrap", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <span>▲</span>
+                    <span>{settings.highThreshold}%</span>
+                  </span>
+                  <span style={{ position: "absolute", right: "0%", fontSize: 9, color: T.textSub }}>100%</span>
+                </div>
+              </div>
+
+              {/* Zone legend */}
+              <div style={{ display: "flex", gap: 8 }}>
+                {[
+                  { label: `Dry Run Risk ≤${settings.lowThreshold}%`, color: "#ef4444", active: data.level < settings.lowThreshold },
+                  { label: "Normal Range", color: "#22c55e", active: data.level >= settings.lowThreshold && data.level <= settings.highThreshold },
+                  { label: `Overflow Risk ≥${settings.highThreshold}%`, color: "#f59e0b", active: data.level > settings.highThreshold },
+                ].map(z => (
+                  <div key={z.label} style={{ flex: 1, padding: "5px 7px", borderRadius: 8, background: z.active ? `${z.color}18` : "transparent", border: `1px solid ${z.active ? z.color : T.cardBorder}`, textAlign: "center", transition: "all 0.4s" }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: z.color, margin: "0 auto 3px", opacity: z.active ? 1 : 0.35, boxShadow: z.active ? `0 0 0 3px ${z.color}33` : "none" }} />
+                    <div style={{ fontSize: 8.5, fontWeight: z.active ? 700 : 400, color: z.active ? z.color : T.textSub, lineHeight: 1.3 }}>{z.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
