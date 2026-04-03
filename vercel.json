@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "builds": [
+    {
+      "src": "artifacts/water-dashboard/package.json",
+      "use": "@vercel/static-build"
+    },
+    {
+      "src": "artifacts/api-server/src/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/artifacts/api-server/src/vercel.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/artifacts/water-dashboard/$1"
+    }
+  ]
+}
