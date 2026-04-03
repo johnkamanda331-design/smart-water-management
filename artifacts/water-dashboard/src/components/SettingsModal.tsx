@@ -16,7 +16,7 @@ export default function SettingsModal({ settings, onSave, onClose, isDark }: Pro
   const [pinMsg, setPinMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [activeTab, setActiveTab] = useState<"thresholds" | "notifications" | "pin" | "calibration" | "data">("thresholds");
 
-  const bg     = isDark ? "#030712"           : "rgba(240,249,255,0.98)";
+  const _bg    = isDark ? "#030712"           : "rgba(240,249,255,0.98)";
   const card   = isDark ? "rgba(15,23,42,0.98)" : "rgba(255,255,255,0.98)";
   const border = isDark ? "rgba(56,189,248,0.18)" : "rgba(6,182,212,0.3)";
   const text   = isDark ? "#e2e8f0"           : "#0c4a6e";

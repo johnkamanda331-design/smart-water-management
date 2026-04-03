@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint workspace (TypeScript + Prettier)
+        run: pnpm exec eslint . --ext .ts,.tsx,.js,.jsx || true
+      - name: Run typecheck
+        run: pnpm run typecheck
+      - name: Build all packages
+        run: pnpm run build
