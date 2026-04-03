@@ -1,0 +1,180 @@
+You are an expert embedded systems and IoT web developer.
+
+Generate a COMPLETE, production-quality ESP8266 web dashboard for a Smart Water Management System. The system communicates with an Arduino via Serial and must be fully functional, efficient, and mobile-friendly.
+
+========================
+SYSTEM REQUIREMENTS
+===================
+
+Hardware:
+
+* ESP8266 (NodeMCU)
+* Arduino (sending serial data)
+* Data format received over Serial:
+  "LEVEL:75;DIST:25;DRY:0;OVERFLOW:1;"
+
+Where:
+
+* LEVEL = water level percentage (0–100)
+* DIST = ultrasonic distance (cm)
+* DRY = 1 if dry run detected, else 0
+* OVERFLOW = 1 if overflow detected, else 0
+
+ESP8266 must:
+
+* Host a web server
+* Serve a modern dashboard UI
+* Handle pump ON/OFF commands via HTTP routes
+* Communicate commands to Arduino via Serial ("APP_ON", "APP_OFF")
+
+========================
+UI / UX REQUIREMENTS
+====================
+
+Design a BEAUTIFUL, MODERN, MOBILE-FIRST dashboard with:
+
+1. DARK THEME (professional look)
+
+   * Background: dark navy/black
+   * Cards with soft shadows and rounded corners
+
+2. HEADER
+
+   * Title: "Smart Water Management System"
+   * Subtitle: "Real-Time Monitoring & Control"
+
+3. WATER LEVEL DISPLAY
+
+   * Animated progress bar (0–100%)
+   * Smooth transitions
+   * Show percentage inside bar
+
+4. ANIMATED WATER TANK VISUAL
+
+   * A vertical tank graphic
+   * Water level rises/falls dynamically based on LEVEL
+   * Use CSS animation (no heavy libraries)
+
+5. CONTROL PANEL
+
+   * Two large buttons:
+
+     * Turn Pump ON (green)
+     * Turn Pump OFF (red)
+   * Buttons send requests to:
+     /on and /off routes
+
+6. STATUS INDICATORS
+
+   * Dry Run:
+
+     * Red if active
+     * Green if safe
+   * Overflow:
+
+     * Red if active
+     * Green if safe
+
+7. LIVE DATA DISPLAY
+
+   * Water level (%)
+   * Distance (cm)
+
+8. AUTO-REFRESH (REAL-TIME)
+
+   * Use JavaScript fetch() to call /data endpoint every 2 seconds
+   * Update UI dynamically without reloading page
+
+========================
+ADVANCED FEATURES
+=================
+
+Include the following enhancements:
+
+1. LIVE CHART
+
+   * Use lightweight chart library (Chart.js via CDN)
+   * Display water level over time
+   * Max 20 data points (to save memory)
+
+2. NOTIFICATIONS (Browser-based)
+
+   * If DRY = 1 → show alert "Dry Run Detected!"
+   * If OVERFLOW = 1 → show alert "Overflow Detected!"
+
+3. RESPONSIVE DESIGN
+
+   * Must look good on phone screens
+   * Use flexible layout (no fixed widths)
+
+4. CLEAN CODE STRUCTURE
+
+   * Separate:
+
+     * HTML
+     * CSS
+     * JavaScript (inside script tags is fine)
+   * Use template placeholders like %LEVEL%
+
+========================
+BACKEND (ESP8266 CODE)
+======================
+
+Use:
+
+* ESP8266WebServer library
+
+Implement:
+
+* "/" → serves dashboard HTML
+* "/data" → returns JSON:
+  {
+  "level": 75,
+  "distance": 25,
+  "dry": 0,
+  "overflow": 1
+  }
+* "/on" → sends "APP_ON" to Arduino
+* "/off" → sends "APP_OFF" to Arduino
+
+Include:
+
+* Function to parse Serial input safely
+* Avoid memory fragmentation (use String carefully)
+
+========================
+PERFORMANCE REQUIREMENTS
+========================
+
+* Must run on ESP8266 (low RAM)
+* Avoid heavy frameworks (NO React, NO Bootstrap)
+* Use inline CSS + minimal JS
+* Keep HTML efficient
+
+========================
+OUTPUT FORMAT
+=============
+
+Provide:
+
+1. FULL Arduino-compatible ESP8266 code (.ino)
+2. Clearly marked sections:
+
+   * WiFi setup
+   * Web server routes
+   * HTML dashboard
+   * Serial parsing
+3. Comments explaining key parts
+
+Ensure the code is:
+
+* Compile-ready
+* Functional without modification (except WiFi credentials)
+
+========================
+GOAL
+====
+
+The result should look like a REAL commercial IoT dashboard and be suitable for a final year engineering project demonstration.
+
+Make it visually impressive, smooth, and technically correct.

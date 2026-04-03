@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Smart Water Management System"
+version = "1.0.0"
+id = "artifacts/water-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24813
+
+[services.development]
+run = "pnpm --filter @workspace/water-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/water-dashboard", "run", "build" ]
+publicDir = "artifacts/water-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24813"
+BASE_PATH = "/"
