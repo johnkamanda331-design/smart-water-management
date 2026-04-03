@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": "artifacts/water-dashboard/dist/public",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -9,5 +10,8 @@
       "src": "/(.*)",
       "dest": "/artifacts/water-dashboard/$1"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
