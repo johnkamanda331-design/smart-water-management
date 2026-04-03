@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "artifacts/water-dashboard/package.json",
-      "use": "@vercel/static-build"
-    },
-    {
-      "src": "artifacts/api-server/src/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
