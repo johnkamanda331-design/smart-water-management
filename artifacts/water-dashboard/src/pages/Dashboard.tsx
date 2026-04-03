@@ -120,8 +120,13 @@ const OVERRIDE_OPTIONS: { id: OverrideMode; label: string; desc: string; color: 
   { id: "emergency_stop",  label: "Emergency Stop",      desc: "Halt all operations immediately and lock system", color: "#dc2626", icon: "🚨" },
 ];
 
-export default function Dashboard() {
-  const [isDark, setIsDark] = useState(true);
+interface DashboardProps {
+  isDark: boolean;
+  setIsDark: (v: boolean) => void;
+  onLock: () => void;
+}
+
+export default function Dashboard({ isDark, setIsDark, onLock }: DashboardProps) {
   const T = getTheme(isDark);
 
   const [data, setData] = useState<SensorData>({ level: 0, distance: 0, dry: 0, overflow: 0 });
@@ -383,7 +388,7 @@ export default function Dashboard() {
 
             {/* Theme toggle */}
             <button
-              onClick={() => setIsDark(v => !v)}
+              onClick={() => setIsDark(!isDark)}
               style={{
                 background: T.toggleBg,
                 border: `1px solid ${T.toggleBorder}`,
@@ -401,6 +406,29 @@ export default function Dashboard() {
               }}
             >
               {isDark ? "☀️ Light" : "🌙 Dark"}
+            </button>
+
+            {/* Lock button */}
+            <button
+              onClick={onLock}
+              title="Lock dashboard"
+              style={{
+                background: isDark ? "rgba(239,68,68,0.08)" : "rgba(239,68,68,0.07)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                borderRadius: 8,
+                padding: "6px 12px",
+                color: "#ef4444",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                transition: "all 0.2s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              🔒 Lock
             </button>
           </div>
         </div>
